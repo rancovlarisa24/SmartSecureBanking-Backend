@@ -13,6 +13,6 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns("http://192.168.1.101:3000") // Originea frontend-ului
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true); // Poate fi utilizat dacă specifici explicit originea
+                .allowCredentials(true); // Poate fi utilizat dacă specifici explicit
     }
 }
