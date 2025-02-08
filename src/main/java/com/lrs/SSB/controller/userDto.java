@@ -5,8 +5,6 @@ public class userDto {
     private String email;
     private String telefon;
     private String parola;
-    private Boolean activated;
-    private String codActivare;
     private String seriaId;
     private String numarId;
     private String dataNasterii;
@@ -43,22 +41,6 @@ public class userDto {
 
     public void setParola(String parola) {
         this.parola = parola;
-    }
-
-    public Boolean getActivated() {
-        return activated;
-    }
-
-    public void setActivated(Boolean activated) {
-        this.activated = activated;
-    }
-
-    public String getCodActivare() {
-        return codActivare;
-    }
-
-    public void setCodActivare(String codActivare) {
-        this.codActivare = codActivare;
     }
 
     public String getSeriaId() {

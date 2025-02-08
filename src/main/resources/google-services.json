@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "17880114670",
+    "project_id": "smart-banking-1cf2c",
+    "storage_bucket": "smart-banking-1cf2c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17880114670:android:161b5248a296b67d95daff",
+        "android_client_info": {
+          "package_name": "com.ssbfrontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArHdlq2uG414aG1XFbwlqo36ce73KLLEA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -13,13 +13,16 @@ public class UserService {
     private UserRepository userRepository;
 
     public void saveUser(userDto userDto) {
+        if ((userDto.getEmail() == null || userDto.getEmail().isBlank()) &&
+                (userDto.getTelefon() == null || userDto.getTelefon().isBlank())) {
+            throw new IllegalArgumentException("Either email or phone number must be provided.");
+        }
+
         User user = new User();
         user.setNumeComplet(userDto.getNumeComplet());
         user.setEmail(userDto.getEmail());
         user.setTelefon(userDto.getTelefon());
         user.setParola(userDto.getParola());
-        user.setActivated(false);
-        user.setCodActivare(userDto.getCodActivare());
         user.setSeriaId(userDto.getSeriaId());
         user.setNumarId(userDto.getNumarId());
         user.setDataNasterii(userDto.getDataNasterii());
@@ -27,5 +30,14 @@ public class UserService {
         user.setLocalitate(userDto.getLocalitate());
 
         userRepository.save(user);
+    }
+
+
+    public boolean userExists(String contact) {
+        if (contact.contains("@")) {
+            return userRepository.findByEmail(contact).isPresent();
+        } else {
+            return userRepository.findByTelefon(contact).isPresent();
+        }
     }
 }
