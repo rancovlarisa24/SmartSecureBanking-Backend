@@ -11,12 +11,17 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    public void sendVerificationEmail(String to, String code) {
+    @Autowired
+    private VerificationService verificationService;
+
+    public void sendVerificationEmail(String to) {
+        String code = verificationService.generateCode();
+        verificationService.saveCode(to, code);
+
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setSubject("Cod de verificare");
-        message.setText("Codul tău de verificare este: " + code);
+        message.setText("Your verification code is: " + code);
         mailSender.send(message);
     }
 }
-

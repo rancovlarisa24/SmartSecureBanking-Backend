@@ -21,12 +21,6 @@ public class User {
     @Column(nullable = false)
     private String parola;
 
-    @Column(nullable = false)
-    private Boolean activated;
-
-    @Column
-    private String codActivare;
-
     @Column
     private String seriaId;
 
@@ -82,21 +76,6 @@ public class User {
         this.parola = parola;
     }
 
-    public Boolean getActivated() {
-        return activated;
-    }
-
-    public void setActivated(Boolean activated) {
-        this.activated = activated;
-    }
-
-    public String getCodActivare() {
-        return codActivare;
-    }
-
-    public void setCodActivare(String codActivare) {
-        this.codActivare = codActivare;
-    }
 
     public String getSeriaId() {
         return seriaId;
