@@ -1,16 +1,21 @@
 package com.lrs.SSB.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.lrs.SSB.repository.UserRepository;
 import com.lrs.SSB.entity.User;
 import com.lrs.SSB.controller.userDto;
+
+import java.util.Optional;
 
 @Service
 public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public void saveUser(userDto userDto) {
         if ((userDto.getEmail() == null || userDto.getEmail().isBlank()) &&
@@ -22,7 +27,10 @@ public class UserService {
         user.setNumeComplet(userDto.getNumeComplet());
         user.setEmail(userDto.getEmail());
         user.setTelefon(userDto.getTelefon());
-        user.setParola(userDto.getParola());
+
+        String hashedPassword = passwordEncoder.encode(userDto.getParola());
+        user.setParola(hashedPassword);
+
         user.setSeriaId(userDto.getSeriaId());
         user.setNumarId(userDto.getNumarId());
         user.setDataNasterii(userDto.getDataNasterii());
@@ -32,12 +40,23 @@ public class UserService {
         userRepository.save(user);
     }
 
-
     public boolean userExists(String contact) {
         if (contact.contains("@")) {
             return userRepository.findByEmail(contact).isPresent();
         } else {
             return userRepository.findByTelefon(contact).isPresent();
         }
+    }
+
+    public Optional<User> findByContact(String contact) {
+        if (contact.contains("@")) {
+            return userRepository.findByEmail(contact);
+        } else {
+            return userRepository.findByTelefon(contact);
+        }
+    }
+
+    public boolean verifyPassword(String plainPassword, String hashedPassword) {
+        return passwordEncoder.matches(plainPassword, hashedPassword);
     }
 }
