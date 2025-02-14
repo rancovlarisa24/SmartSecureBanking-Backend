@@ -25,4 +25,5 @@ public class VerificationService {
     public String generateCode() {
         return String.valueOf((int) (Math.random() * 900000) + 100000);
     }
+
 }
