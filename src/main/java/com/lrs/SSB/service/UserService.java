@@ -59,4 +59,17 @@ public class UserService {
     public boolean verifyPassword(String plainPassword, String hashedPassword) {
         return passwordEncoder.matches(plainPassword, hashedPassword);
     }
+
+    public void updatePassword(String contact, String newPassword) {
+        Optional<User> userOpt = findByContact(contact);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("User not found.");
+        }
+
+        User user = userOpt.get();
+        String hashedPassword = passwordEncoder.encode(newPassword);
+        user.setParola(hashedPassword);
+        userRepository.save(user);
+    }
+
 }

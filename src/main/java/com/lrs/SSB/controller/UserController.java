@@ -112,17 +112,14 @@ public class UserController {
         if (token == null || !token.startsWith("Bearer ")) {
             return ResponseEntity.status(401).body(Map.of("message", "Invalid or missing token."));
         }
-
         try {
-            token = token.substring(7).trim(); // Remove "Bearer " prefix and trim spaces
+            token = token.substring(7).trim();
 
             if (!jwtUtil.validateToken(token)) {
                 return ResponseEntity.status(401).body(Map.of("message", "Invalid or expired token."));
             }
 
             String userEmail = jwtUtil.extractEmail(token);
-
-            // 🔹 Verifică dacă utilizatorul există în baza de date
             Optional<User> user = userRepository.findByEmail(userEmail);
             if (user.isEmpty()) {
                 return ResponseEntity.status(401).body(Map.of("message", "User not found."));
@@ -135,7 +132,24 @@ public class UserController {
         }
     }
 
+    @PostMapping("/update-password")
+    public ResponseEntity<?> updatePassword(@RequestBody Map<String, String> request) {
+        String contact = request.get("contact");
+        String newPassword = request.get("newPassword");
 
+        if (contact == null || contact.isBlank() || newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Contact and new password are required."));
+        }
+
+        try {
+            userService.updatePassword(contact.trim(), newPassword);
+            return ResponseEntity.ok(Map.of("message", "Password updated successfully."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error."));
+        }
+    }
 
 
 }
