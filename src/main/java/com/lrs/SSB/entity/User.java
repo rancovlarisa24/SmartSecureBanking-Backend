@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(nullable = false)
     private String numeComplet;
@@ -36,11 +36,15 @@ public class User {
     @Column(nullable = false)
     private String localitate;
 
-    public Long getId() {
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] profileImage;
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -75,7 +79,6 @@ public class User {
     public void setParola(String parola) {
         this.parola = parola;
     }
-
 
     public String getSeriaId() {
         return seriaId;
@@ -115,5 +118,13 @@ public class User {
 
     public void setLocalitate(String localitate) {
         this.localitate = localitate;
+    }
+
+    public byte[] getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(byte[] profileImage) {
+        this.profileImage = profileImage;
     }
 }

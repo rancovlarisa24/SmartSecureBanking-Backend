@@ -72,4 +72,27 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void updateProfileImage(String contact, byte[] imageBytes) {
+        Optional<User> userOpt = findByContact(contact);
+
+        if (userOpt.isEmpty()) {
+            System.out.println("User not found for contact: " + contact);
+            throw new IllegalArgumentException("User not found.");
+        }
+
+        User user = userOpt.get();
+
+        System.out.println("Saving image for user: " + user.getEmail() + " / " + user.getTelefon());
+
+        user.setProfileImage(imageBytes);
+        userRepository.save(user);
+
+        System.out.println("Image saved successfully.");
+    }
+
+    public Optional<User> findUserById(Long userId) {
+        return userRepository.findById(userId);
+    }
+
+
 }
