@@ -26,4 +26,13 @@ public class CardService {
     public List<Card> findCardsByUser(User user) {
         return cardRepository.findByUser(user);
     }
+
+    public Optional<Card> findById(Long cardId) {
+        return cardRepository.findById(cardId);
+    }
+
+    public void deleteCard(Long cardId) {
+        cardRepository.deleteById(cardId);
+    }
+
 }
