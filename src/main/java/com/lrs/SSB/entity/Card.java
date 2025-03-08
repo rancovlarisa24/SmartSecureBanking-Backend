@@ -42,6 +42,9 @@ public class Card {
     @Column(name = "card_currency", length = 10)
     private String cardCurrency;
 
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
     public Card() {}
 
     public Integer getId() {
@@ -130,5 +133,13 @@ public class Card {
 
     public void setCardCurrency(String cardCurrency) {
         this.cardCurrency = cardCurrency;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

@@ -414,4 +414,40 @@ public class UserController {
 
         return ResponseEntity.ok(Map.of("message", "Logout successful."));
     }
+
+    @PostMapping("/verify-password")
+    public ResponseEntity<?> verifyPassword(
+            @RequestHeader(value = "Authorization", required = true) String token,
+            @RequestBody Map<String, String> request
+    ) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid or missing token."));
+        }
+
+        String jwtToken = token.substring(7).trim();
+        String contact;
+        try {
+            contact = jwtUtil.extractContact(jwtToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid token.", "error", e.getMessage()));
+        }
+        String password = request.get("password");
+        if (password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Password is required."));
+        }
+
+        Optional<User> userOpt = userService.findByContact(contact);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+        }
+
+        User user = userOpt.get();
+        boolean isValid = userService.verifyPassword(password, user.getParola());
+        if (!isValid) {
+            return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Password is correct."));
+    }
+
 }

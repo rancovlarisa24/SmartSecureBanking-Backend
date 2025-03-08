@@ -14,6 +14,7 @@ public class CardDto {
     private String personalizedName;
     private String bankIssuer;
     private String cardCurrency;
+    private boolean active;
 
     public CardDto() {
     }
@@ -96,5 +97,13 @@ public class CardDto {
 
     public void setCardCurrency(String cardCurrency) {
         this.cardCurrency = cardCurrency;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }
