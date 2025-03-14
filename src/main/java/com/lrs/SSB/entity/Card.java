@@ -2,6 +2,7 @@ package com.lrs.SSB.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "cards")
@@ -44,6 +45,9 @@ public class Card {
 
     @Column(name = "active", nullable = false)
     private boolean active = true;
+
+    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Transaction> transactions;
 
     public Card() {}
 

@@ -94,5 +94,9 @@ public class UserService {
         return userRepository.findById(userId);
     }
 
+    public Optional<User> findByNumeComplet(String numeComplet) {
+        return userRepository.findByNumeComplet(numeComplet);
+    }
+
 
 }
