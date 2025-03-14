@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -334,6 +335,149 @@ public class CardController {
         }
         return ResponseEntity.ok(cardOpt.get());
     }
+
+    @PostMapping("/verify-beneficiary")
+    public ResponseEntity<?> verifyBeneficiary(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestBody Map<String, String> payload
+    ) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body("Invalid or missing token.");
+        }
+        String jwtToken = token.substring(7).trim();
+        if (!jwtUtil.validateToken(jwtToken)) {
+            return ResponseEntity.status(401).body("Token is invalid or expired.");
+        }
+
+        String beneficiaryName = payload.get("beneficiaryName");
+        String iban = payload.get("iban");
+
+        if (beneficiaryName == null || beneficiaryName.trim().isEmpty() ||
+                iban == null || iban.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Invalid beneficiary data.");
+        }
+
+
+        Optional<User> maybeUser = userService.findByNumeComplet(beneficiaryName);
+        if (maybeUser.isEmpty()) {
+            return ResponseEntity.badRequest().body("No user with that name.");
+        }
+
+        User user = maybeUser.get();
+        List<Card> cards = cardService.findCardsByUser(user);
+        boolean foundMatchingCard = cards.stream()
+                .anyMatch(c -> c.getIban().equalsIgnoreCase(iban));
+
+        if (!foundMatchingCard) {
+            return ResponseEntity.badRequest().body("User has no card with the provided IBAN.");
+        }
+
+        return ResponseEntity.ok("Beneficiary verified.");
+    }
+
+    @PostMapping("/transfer")
+    public ResponseEntity<?> transferAmount(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestBody Map<String, String> payload
+    ) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body("Invalid or missing token.");
+        }
+        String jwtToken = token.substring(7).trim();
+        if (!jwtUtil.validateToken(jwtToken)) {
+            return ResponseEntity.status(401).body("Token is invalid or expired.");
+        }
+
+        String userContact = jwtUtil.extractContact(jwtToken);
+        Optional<User> userOpt = userService.findByContact(userContact);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("User not found.");
+        }
+        User user = userOpt.get();
+
+        String fromCardIdStr = payload.get("fromCardId");
+        String toCardIdStr = payload.get("toCardId");
+        String amountStr = payload.get("amount");
+
+        String beneficiaryName = payload.get("beneficiaryName");
+        String iban = payload.get("iban");
+
+        if (fromCardIdStr == null || fromCardIdStr.isEmpty() ||
+                amountStr == null || amountStr.isEmpty()) {
+            return ResponseEntity.badRequest().body("Missing transfer details (fromCardId / amount).");
+        }
+        double amount;
+        long fromCardId, toCardId = -1;
+        try {
+            fromCardId = Long.parseLong(fromCardIdStr);
+            amount = Double.parseDouble(amountStr);
+            if (toCardIdStr != null && !toCardIdStr.isEmpty()) {
+                toCardId = Long.parseLong(toCardIdStr);
+            }
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("Invalid number format.");
+        }
+        if (amount <= 0) {
+            return ResponseEntity.badRequest().body("Amount must be > 0.");
+        }
+        Optional<Card> fromCardOpt = cardService.findById(fromCardId);
+        if (fromCardOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Source card not found.");
+        }
+        Card fromCard = fromCardOpt.get();
+        if (!fromCard.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(403).body("You do not own the source card.");
+        }
+
+        if (fromCard.getBalance().doubleValue() < amount) {
+            return ResponseEntity.badRequest().body("Insufficient balance in source card.");
+        }
+
+        if (toCardId != -1) {
+            Optional<Card> toCardOpt = cardService.findById(toCardId);
+            if (toCardOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Destination card not found.");
+            }
+            Card toCard = toCardOpt.get();
+            if (!toCard.getUser().getId().equals(user.getId())) {
+                return ResponseEntity.badRequest().body("Destination card does not belong to you.");
+            }
+            fromCard.setBalance(fromCard.getBalance().subtract(BigDecimal.valueOf(amount)));
+            toCard.setBalance(toCard.getBalance().add(BigDecimal.valueOf(amount)));
+
+            cardService.saveCard(fromCard);
+            cardService.saveCard(toCard);
+
+        } else {
+            if (beneficiaryName == null || beneficiaryName.trim().isEmpty()
+                    || iban == null || iban.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Missing beneficiary details for external transfer.");
+            }
+
+            Optional<User> beneficiaryUserOpt = userService.findByNumeComplet(beneficiaryName);
+            if (beneficiaryUserOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("No user with that name.");
+            }
+            User beneficiaryUser = beneficiaryUserOpt.get();
+            List<Card> beneficiaryCards = cardService.findCardsByUser(beneficiaryUser);
+            Optional<Card> destinationOpt = beneficiaryCards.stream()
+                    .filter(c -> c.getIban().equalsIgnoreCase(iban))
+                    .findFirst();
+
+            if (destinationOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Beneficiary user has no card with the provided IBAN.");
+            }
+            Card destinationCard = destinationOpt.get();
+            fromCard.setBalance(fromCard.getBalance().subtract(BigDecimal.valueOf(amount)));
+            destinationCard.setBalance(destinationCard.getBalance().add(BigDecimal.valueOf(amount)));
+
+            cardService.saveCard(fromCard);
+            cardService.saveCard(destinationCard);
+        }
+
+        return ResponseEntity.ok("Transfer completed successfully.");
+    }
+
 
 }
 
