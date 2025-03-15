@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TransactionService {
@@ -29,17 +30,20 @@ public class TransactionService {
         transaction.setTransactionType(type);
         transaction.setBeneficiaryName(beneficiaryName);
         transaction.setBeneficiaryIban(beneficiaryIban);
+
         if (beneficiaryIban != null && !beneficiaryIban.trim().isEmpty()) {
-            Card toCard = cardRepository.findByIban(beneficiaryIban);
-            if (toCard == null) {
+            Optional<Card> toCardOpt = cardRepository.findByIban(beneficiaryIban);
+            if (!toCardOpt.isPresent()) {
                 throw new RuntimeException("Beneficiary card not found for IBAN: " + beneficiaryIban);
             }
+            Card toCard = toCardOpt.get();
             transaction.setFromCard(fromCard);
             transaction.setToCard(toCard);
         }
 
         transactionRepository.save(transaction);
     }
+
 
 
     public List<Transaction> getTransactionsByCard(Long cardId) {

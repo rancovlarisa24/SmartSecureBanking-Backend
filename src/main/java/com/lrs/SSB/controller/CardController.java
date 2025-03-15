@@ -7,10 +7,12 @@ import com.lrs.SSB.service.PayPalService;
 import com.lrs.SSB.service.UserService;
 import com.lrs.SSB.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -476,6 +478,20 @@ public class CardController {
         }
 
         return ResponseEntity.ok("Transfer completed successfully.");
+    }
+
+
+    @PostMapping("/find-by-iban")
+    public ResponseEntity<?> findCardIdByIban(@RequestBody Map<String, String> request) {
+        String iban = request.get("iban");
+        Optional<Card> card = cardService.findByIban(iban);
+
+        if (card == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", "Nu există un card cu IBAN-ul specificat."));
+        }
+        Card cardId = card.get();
+        return ResponseEntity.ok(Collections.singletonMap("cardId", cardId));
     }
 
 
