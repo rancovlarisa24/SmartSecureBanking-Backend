@@ -9,6 +9,8 @@ public class TransactionRequest {
     private TransactionType transactionType;
     private String beneficiaryName;
     private String beneficiaryIban;
+    private String sourceId;
+    private String destId;
 
     public Long getCardId() {
         return cardId;
@@ -49,4 +51,10 @@ public class TransactionRequest {
     public void setBeneficiaryIban(String beneficiaryIban) {
         this.beneficiaryIban = beneficiaryIban;
     }
+
+    public String getSourceId() { return sourceId; }
+    public void setSourceId(String sourceId) { this.sourceId = sourceId; }
+
+    public String getDestId() { return destId; }
+    public void setDestId(String destId) { this.destId = destId; }
 }

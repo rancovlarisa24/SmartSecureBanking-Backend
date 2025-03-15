@@ -35,4 +35,8 @@ public class CardService {
         cardRepository.deleteById(cardId);
     }
 
+    public Optional<Card> findByIban(String iban) {
+        return cardRepository.findByIban(iban);
+    }
+
 }
