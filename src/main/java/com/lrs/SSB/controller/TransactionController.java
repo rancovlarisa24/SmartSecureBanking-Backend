@@ -27,8 +27,9 @@ public class TransactionController {
         String destId = request.getDestId();
         System.out.println(request.getDestId());
         BigInteger amount = request.getAmount().toBigInteger();
+        String blockchainPrivateKey = request.getBlockchainPrivateKey();
 
-        boolean validated = blockchainService.validateTransferOnBlockchain(sourceId, destId, amount);
+        boolean validated = blockchainService.validateTransferOnBlockchain(sourceId, destId, amount, blockchainPrivateKey);
         if (!validated) {
             return ResponseEntity.badRequest().body("Blockchain validation failed. Possibly duplicate transaction.");
         }
