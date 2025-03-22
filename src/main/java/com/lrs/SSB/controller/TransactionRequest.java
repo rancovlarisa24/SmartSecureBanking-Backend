@@ -11,6 +11,7 @@ public class TransactionRequest {
     private String beneficiaryIban;
     private String sourceId;
     private String destId;
+    private String blockchainPrivateKey;
 
     public Long getCardId() {
         return cardId;
@@ -57,4 +58,13 @@ public class TransactionRequest {
 
     public String getDestId() { return destId; }
     public void setDestId(String destId) { this.destId = destId; }
+
+    public String getBlockchainPrivateKey() {
+        return blockchainPrivateKey;
+    }
+
+    public void setBlockchainPrivateKey(String blockchainPrivateKey) {
+        this.blockchainPrivateKey = blockchainPrivateKey;
+    }
+
 }

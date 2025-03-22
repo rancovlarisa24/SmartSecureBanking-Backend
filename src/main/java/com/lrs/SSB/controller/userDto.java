@@ -10,6 +10,7 @@ public class userDto {
     private String dataNasterii;
     private String judet;
     private String localitate;
+    private String blockchainPrivateKey;
 
     public String getNumeComplet() {
         return numeComplet;
@@ -81,5 +82,13 @@ public class userDto {
 
     public void setLocalitate(String localitate) {
         this.localitate = localitate;
+    }
+
+    public String getBlockchainPrivateKey() {
+        return blockchainPrivateKey;
+    }
+
+    public void setBlockchainPrivateKey(String blockchainPrivateKey) {
+        this.blockchainPrivateKey = blockchainPrivateKey;
     }
 }

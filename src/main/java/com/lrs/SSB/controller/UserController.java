@@ -450,6 +450,33 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Password is correct."));
     }
 
+    @GetMapping("/get-blockchain-key")
+    public ResponseEntity<?> getBlockchainKey(@RequestHeader("Authorization") String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid or missing token."));
+        }
+
+        try {
+            String jwtToken = token.substring(7).trim();
+            String userContact = jwtUtil.extractContact(jwtToken);
+            Optional<User> userOpt = userService.findByContact(userContact);
+
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+            }
+
+            User user = userOpt.get();
+            String blockchainKey = user.getBlockchainPrivateKey();
+
+            if (blockchainKey == null || blockchainKey.isBlank()) {
+                return ResponseEntity.status(404).body(Map.of("message", "Blockchain key not set for user."));
+            }
+            return ResponseEntity.ok(Map.of("blockchainPrivateKey", blockchainKey));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Error processing request.", "error", e.getMessage()));
+        }
+    }
 
 
 }

@@ -40,6 +40,9 @@ public class User {
     @Column(columnDefinition = "LONGBLOB")
     private byte[] profileImage;
 
+    @Column(name = "blockchain_private_key", length = 66)
+    private String blockchainPrivateKey;
+
     public Integer getId() {
         return id;
     }
@@ -126,5 +129,13 @@ public class User {
 
     public void setProfileImage(byte[] profileImage) {
         this.profileImage = profileImage;
+    }
+
+    public String getBlockchainPrivateKey() {
+        return blockchainPrivateKey;
+    }
+
+    public void setBlockchainPrivateKey(String blockchainPrivateKey) {
+        this.blockchainPrivateKey = blockchainPrivateKey;
     }
 }
