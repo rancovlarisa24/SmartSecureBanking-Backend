@@ -2,9 +2,11 @@ package com.lrs.SSB.controller;
 
 import com.lrs.SSB.entity.Card;
 import com.lrs.SSB.entity.User;
+import com.lrs.SSB.entity.Utility;
 import com.lrs.SSB.service.CardService;
 import com.lrs.SSB.service.PayPalService;
 import com.lrs.SSB.service.UserService;
+import com.lrs.SSB.service.UtilityService;
 import com.lrs.SSB.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,7 +33,11 @@ public class CardController {
     private UserService userService;
 
     @Autowired
+    private UtilityService utilityService;
+
+    @Autowired
     private JwtUtil jwtUtil;
+    private Utility utility;
 
     @PostMapping("/validate")
     public ResponseEntity<?> validateCard(@RequestBody CardDto cardDto) {
@@ -493,6 +499,101 @@ public class CardController {
         Card cardId = card.get();
         return ResponseEntity.ok(Collections.singletonMap("cardId", cardId));
     }
+
+    @PostMapping("/pay-bill")
+    public ResponseEntity<?> payBill(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestBody Map<String, String> payload
+    ) {
+        try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body("Invalid or missing token.");
+            }
+            String jwtToken = token.substring(7).trim();
+            if (!jwtUtil.validateToken(jwtToken)) {
+                return ResponseEntity.status(401).body("Token is invalid or expired.");
+            }
+
+            String userContact = jwtUtil.extractContact(jwtToken);
+            Optional<User> userOpt = userService.findByContact(userContact);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("User not found.");
+            }
+            User user = userOpt.get();
+            String fromCardIdStr = payload.get("fromCardId");
+            String providerName   = payload.get("providerName");
+            String providerIban   = payload.get("providerIban");
+            String amountStr      = payload.get("amount");
+
+            if (fromCardIdStr == null || fromCardIdStr.isEmpty() ||
+                    providerName   == null || providerName.trim().isEmpty() ||
+                    amountStr      == null || amountStr.isEmpty()
+            ) {
+                return ResponseEntity.badRequest().body("Missing bill payment details.");
+            }
+
+            double amount;
+            long fromCardId;
+            try {
+                fromCardId = Long.parseLong(fromCardIdStr);
+                amount = Double.parseDouble(amountStr);
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body("Invalid format for fromCardId or amount.");
+            }
+            if (amount <= 0) {
+                return ResponseEntity.badRequest().body("Amount must be > 0.");
+            }
+
+            Optional<Card> fromCardOpt = cardService.findById(fromCardId);
+            if (fromCardOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Source card not found.");
+            }
+            Card fromCard = fromCardOpt.get();
+            if (!fromCard.getUser().getId().equals(user.getId())) {
+                return ResponseEntity.status(403).body("You do not own the source card.");
+            }
+            if (fromCard.getBalance().doubleValue() < amount) {
+                return ResponseEntity.badRequest().body("Insufficient balance on source card.");
+            }
+
+            Optional<Utility> maybeService = utilityService.getAllUtilities().stream()
+                    .filter(u -> u.getServiceName().equalsIgnoreCase(providerName))
+                    .findFirst();
+
+            if (maybeService.isEmpty()) {
+                return ResponseEntity.badRequest().body("Provider not found in the system.");
+            }
+            Utility service = maybeService.get();
+            if (providerIban != null && !providerIban.isEmpty()) {
+                if (!service.getIban().equalsIgnoreCase(providerIban)) {
+                    return ResponseEntity.badRequest().body("Provided IBAN does not match the chosen provider's IBAN.");
+                }
+            }
+            Long providerCardId = service.getDestinationCardId();
+            if (providerCardId == null) {
+                return ResponseEntity.badRequest().body("Provider has no destination card ID set.");
+            }
+
+            Optional<Card> providerCardOpt = cardService.findById(providerCardId);
+            if (providerCardOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Destination card for this provider not found.");
+            }
+            Card providerCard = providerCardOpt.get();
+
+            fromCard.setBalance(fromCard.getBalance().subtract(BigDecimal.valueOf(amount)));
+            providerCard.setBalance(providerCard.getBalance().add(BigDecimal.valueOf(amount)));
+
+            cardService.saveCard(fromCard);
+            cardService.saveCard(providerCard);
+
+            return ResponseEntity.ok("Bill payment completed successfully.");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("An error occurred: " + e.getMessage());
+        }
+    }
+
+
 
 
 }
