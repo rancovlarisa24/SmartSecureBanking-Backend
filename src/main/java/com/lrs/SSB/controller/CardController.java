@@ -492,9 +492,9 @@ public class CardController {
         String iban = request.get("iban");
         Optional<Card> card = cardService.findByIban(iban);
 
-        if (card == null) {
+        if (card.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Collections.singletonMap("error", "Nu există un card cu IBAN-ul specificat."));
+                    .body(Collections.singletonMap("error", "User or service not found."));
         }
         Card cardId = card.get();
         return ResponseEntity.ok(Collections.singletonMap("cardId", cardId));

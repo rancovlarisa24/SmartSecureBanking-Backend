@@ -28,7 +28,7 @@ public class BlockchainService {
 
             TransactionValidator contract = TransactionValidator.load(contractAddress, web3j, userCredentials, new DefaultGasProvider());
 
-            String txIdString = sourceId + "-" + destId + "-" + amount;
+            String txIdString = sourceId + "-" + destId + "-" + amount+ "-" + System.currentTimeMillis();
             byte[] txHash = Numeric.hexStringToByteArray(org.web3j.crypto.Hash.sha3String(txIdString));
             TransactionReceipt receipt = contract.validateTransfer(sourceId, destId, amount, txHash).send();
             return receipt.getStatus() != null && receipt.getStatus().equals("0x1");
