@@ -2,6 +2,7 @@ package com.lrs.SSB.service;
 import com.lrs.SSB.entity.Card;
 import com.lrs.SSB.entity.RecurringPayment;
 import com.lrs.SSB.entity.TransactionType;
+import com.lrs.SSB.entity.User;
 import com.lrs.SSB.repository.RecurringPaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -60,13 +61,13 @@ public class RecurringPaymentService {
         Long cardId = Long.parseLong(payment.getCardId());
         Optional<Card> fromCardOpt = cardService.findById(cardId);
         if (fromCardOpt.isEmpty()) {
-            throw new Exception("Cardul sursă nu a fost găsit pentru plata cu id " + payment.getId());
+            throw new Exception("Source card not found for payment " + payment.getId());
         }
         Card fromCard = fromCardOpt.get();
 
         double amount = payment.getAmount();
         if (fromCard.getBalance().doubleValue() < amount) {
-            throw new Exception("Fonduri insuficiente pe cardul sursă pentru plata cu id " + payment.getId());
+            throw new Exception("Insufficient fonds for card " + payment.getId());
         }
 
         String blockchainPrivateKey = payment.getBlockchainPrivateKey();
@@ -96,9 +97,42 @@ public class RecurringPaymentService {
                 payment.getServiceName(),
                 payment.getIban()
         );
+
+        User user = fromCard.getUser();
+        if (user.isSavingsActive()) {
+            int multiple = user.getRoundingMultiple();
+            if (multiple > 0) {
+                BigDecimal bdAmount = BigDecimal.valueOf(amount);
+                BigDecimal bdMultiple = BigDecimal.valueOf(multiple);
+
+                BigDecimal remainder = bdAmount.remainder(bdMultiple);
+                BigDecimal differenceToSave = BigDecimal.ZERO;
+                if (remainder.compareTo(BigDecimal.ZERO) != 0) {
+                    differenceToSave = bdMultiple.subtract(remainder);
+                }
+                if (differenceToSave.compareTo(BigDecimal.ZERO) > 0 &&
+                        fromCard.getBalance().compareTo(differenceToSave) >= 0) {
+                    Card savingsCard = findSavingsCard(user);
+                    fromCard.setBalance(fromCard.getBalance().subtract(differenceToSave));
+                    savingsCard.setBalance(savingsCard.getBalance().add(differenceToSave));
+
+                    cardService.saveCard(fromCard);
+                    cardService.saveCard(savingsCard);
+                }
+            }
+        }
+
     }
 
-    public LocalDate calculateNextExecutionDate(LocalDate currentDate, String frequency) {
+            private Card findSavingsCard(User user) {
+                List<Card> userCards = cardService.findCardsByUser(user);
+                return userCards.stream()
+                        .filter(c -> "Savings".equalsIgnoreCase(c.getPersonalizedName()))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("No Savings card found for user: " + user.getId()));
+            }
+
+            public LocalDate calculateNextExecutionDate(LocalDate currentDate, String frequency) {
         switch (frequency.toLowerCase()) {
             case "daily":
                 return currentDate.plusDays(1);

@@ -36,7 +36,8 @@ public class UserService {
         user.setDataNasterii(userDto.getDataNasterii());
         user.setJudet(userDto.getJudet());
         user.setLocalitate(userDto.getLocalitate());
-
+        user.setSavingsActive(false);
+        user.setRoundingMultiple(0);
         userRepository.save(user);
     }
 

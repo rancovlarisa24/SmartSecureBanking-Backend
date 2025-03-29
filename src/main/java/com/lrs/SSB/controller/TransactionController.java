@@ -54,4 +54,5 @@ public class TransactionController {
         List<Transaction> transactions = transactionService.getAllTransactionsForCard(cardId);
         return ResponseEntity.ok(transactions);
     }
+
 }

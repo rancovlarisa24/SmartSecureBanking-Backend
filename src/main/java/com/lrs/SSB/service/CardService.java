@@ -38,5 +38,9 @@ public class CardService {
     public Optional<Card> findByIban(String iban) {
         return cardRepository.findByIban(iban);
     }
+    public List<Card> findCardsByUserId(Long userId) {
+        return cardRepository.findByUser_Id(userId);
+    }
+
 
 }

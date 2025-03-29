@@ -1,7 +1,9 @@
 package com.lrs.SSB.controller;
 import com.lrs.SSB.controller.userDto;
+import com.lrs.SSB.entity.Card;
 import com.lrs.SSB.entity.User;
 import com.lrs.SSB.repository.UserRepository;
+import com.lrs.SSB.service.CardService;
 import com.lrs.SSB.service.UserService;
 import com.lrs.SSB.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +11,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,6 +29,10 @@ public class UserController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private CardService cardService;
+
 
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody userDto userDto) {
@@ -478,5 +487,196 @@ public class UserController {
         }
     }
 
+    @GetMapping("/get-user-id")
+    public ResponseEntity<?> getUserId(@RequestHeader("Authorization") String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("message", "Invalid or missing token."));
+        }
+        try {
+            String jwtToken = token.substring(7).trim();
+            String contact = jwtUtil.extractContact(jwtToken);
+            Optional<User> userOpt = userService.findByContact(contact);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(404)
+                        .body(Map.of("message", "User not found."));
+            }
+            Long userId = Long.valueOf(userOpt.get().getId());
+            return ResponseEntity.ok(Map.of("userId", userId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("message", "Error processing request.", "error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/activate-savings")
+    public ResponseEntity<?> activateSavings(@RequestHeader("Authorization") String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid or missing token."));
+        }
+        try {
+            String jwtToken = token.substring(7).trim();
+            String userContact = jwtUtil.extractContact(jwtToken);
+
+            Optional<User> userOpt = userService.findByContact(userContact);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+            }
+
+            User user = userOpt.get();
+            List<Card> userCards = cardService.findCardsByUser(user);
+            boolean hasSavingsCard = userCards.stream()
+                    .anyMatch(c -> "Savings".equalsIgnoreCase(c.getPersonalizedName()));
+            if (!hasSavingsCard) {
+                Card newSavingsCard = createSavingsCard(user);
+                cardService.saveCard(newSavingsCard);
+            }
+            user.setSavingsActive(true);
+            if (user.getRoundingMultiple() == 0) {
+                user.setRoundingMultiple(1);
+            }
+
+            userRepository.save(user);
+
+            return ResponseEntity.ok(Map.of("message", "Automatic savings activated."));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("message", "Error processing request.", "error", e.getMessage()));
+        }
+    }
+
+
+    @PostMapping("/deactivate-savings")
+    public ResponseEntity<?> deactivateSavings(@RequestHeader("Authorization") String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid or missing token."));
+        }
+        try {
+            String jwtToken = token.substring(7).trim();
+            String userContact = jwtUtil.extractContact(jwtToken);
+
+            Optional<User> userOpt = userService.findByContact(userContact);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+            }
+
+            User user = userOpt.get();
+            user.setSavingsActive(false);
+            user.setRoundingMultiple(0);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(Map.of("message", "Automatic savings deactivated."));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Error processing request.", "error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/get-savings-status")
+    public ResponseEntity<?> getSavingsStatus(@RequestHeader("Authorization") String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid or missing token."));
+        }
+        try {
+            String jwtToken = token.substring(7).trim();
+            String userContact = jwtUtil.extractContact(jwtToken);
+
+            Optional<User> userOpt = userService.findByContact(userContact);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+            }
+
+            User user = userOpt.get();
+            return ResponseEntity.ok(Map.of(
+                    "savingsActive", user.isSavingsActive(),
+                    "roundingMultiple", user.getRoundingMultiple()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Error processing request.", "error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/get-rounding-multiple")
+    public ResponseEntity<?> getRoundingMultiple(@RequestHeader("Authorization") String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid or missing token."));
+        }
+        try {
+            String jwtToken = token.substring(7).trim();
+            String userContact = jwtUtil.extractContact(jwtToken);
+
+            Optional<User> userOpt = userService.findByContact(userContact);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+            }
+
+            User user = userOpt.get();
+            return ResponseEntity.ok(Map.of("roundingMultiple", user.getRoundingMultiple()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Error processing request.", "error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/update-rounding-multiple")
+    public ResponseEntity<?> updateRoundingMultiple(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Integer> request
+    ) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid or missing token."));
+        }
+
+        try {
+            String jwtToken = token.substring(7).trim();
+            String userContact = jwtUtil.extractContact(jwtToken);
+
+            Optional<User> userOpt = userService.findByContact(userContact);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+            }
+
+
+            Integer newMultiple = request.get("roundingMultiple");
+            if (newMultiple == null || !(newMultiple == 1 || newMultiple == 5 || newMultiple == 10)) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid rounding multiple."));
+            }
+            User user = userOpt.get();
+            user.setRoundingMultiple(newMultiple);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(Map.of("message", "Rounding multiple updated successfully."));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("message", "Error updating rounding multiple.", "error", e.getMessage()));
+        }
+    }
+
+    private Card createSavingsCard(User user) {
+        Card card = new Card();
+        card.setUser(user);
+        card.setCardholderName(user.getNumeComplet());
+        card.setCardNumber(generateRandomCardNumber());
+        card.setIban(generateRandomIban());
+        card.setExpiryDate("12/28");
+        card.setCvv(generateRandomCvv());
+        card.setBalance(BigDecimal.valueOf(0.00));
+        card.setPersonalizedName("Savings");
+        card.setBankIssuer("SSB");
+        card.setCardCurrency("USD");
+        card.setActive(true);
+        return card;
+    }
+
+    private String generateRandomCardNumber() {
+        return String.valueOf((long)(Math.random() * 1_0000_0000_0000_0000L));
+    }
+
+    private String generateRandomIban() {
+        return "RO99SSB" + (long)(Math.random() * 1_000_000_000L);
+    }
+
+    private String generateRandomCvv() {
+        int cvvNum = (int)(Math.random() * 900) + 100;
+        return String.valueOf(cvvNum);
+    }
 
 }

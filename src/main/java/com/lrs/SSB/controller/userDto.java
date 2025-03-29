@@ -11,7 +11,8 @@ public class userDto {
     private String judet;
     private String localitate;
     private String blockchainPrivateKey;
-
+    private boolean savingsActive;
+    private int roundingMultiple;
     public String getNumeComplet() {
         return numeComplet;
     }
@@ -90,5 +91,21 @@ public class userDto {
 
     public void setBlockchainPrivateKey(String blockchainPrivateKey) {
         this.blockchainPrivateKey = blockchainPrivateKey;
+    }
+
+    public boolean isSavingsActive() {
+        return savingsActive;
+    }
+
+    public void setSavingsActive(boolean savingsActive) {
+        this.savingsActive = savingsActive;
+    }
+
+    public int getRoundingMultiple() {
+        return roundingMultiple;
+    }
+
+    public void setRoundingMultiple(int roundingMultiple) {
+        this.roundingMultiple = roundingMultiple;
     }
 }
