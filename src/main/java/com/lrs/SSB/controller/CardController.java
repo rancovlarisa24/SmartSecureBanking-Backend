@@ -483,7 +483,40 @@ public class CardController {
             cardService.saveCard(destinationCard);
         }
 
+        if (user.isSavingsActive()) {
+            int multiple = user.getRoundingMultiple();
+            if (multiple > 0) {
+                BigDecimal bdAmount = BigDecimal.valueOf(amount);
+                BigDecimal bdMultiple = BigDecimal.valueOf(multiple);
+                BigDecimal remainder = bdAmount.remainder(bdMultiple);
+                BigDecimal differenceToSave = BigDecimal.ZERO;
+                if (remainder.compareTo(BigDecimal.ZERO) != 0) {
+                    differenceToSave = bdMultiple.subtract(remainder);
+                }
+
+                if (differenceToSave.compareTo(BigDecimal.ZERO) > 0 &&
+                        fromCard.getBalance().compareTo(differenceToSave) >= 0)
+                {
+                    Card savingsCard = findSavingsCard(user);
+                    fromCard.setBalance(fromCard.getBalance().subtract(differenceToSave));
+                    savingsCard.setBalance(savingsCard.getBalance().add(differenceToSave));
+
+                    cardService.saveCard(fromCard);
+                    cardService.saveCard(savingsCard);
+
+                }
+            }
+        }
+
         return ResponseEntity.ok("Transfer completed successfully.");
+    }
+
+    private Card findSavingsCard(User user) {
+        List<Card> userCards = cardService.findCardsByUser(user);
+        return userCards.stream()
+                .filter(c -> "Savings".equalsIgnoreCase(c.getPersonalizedName()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No Savings card found for user: " + user.getId()));
     }
 
 
@@ -586,6 +619,34 @@ public class CardController {
             cardService.saveCard(fromCard);
             cardService.saveCard(providerCard);
 
+            if (user.isSavingsActive()) {
+                int multiple = user.getRoundingMultiple();
+                if (multiple > 0) {
+                    BigDecimal bdAmount = BigDecimal.valueOf(amount);
+                    BigDecimal bdMultiple = BigDecimal.valueOf(multiple);
+
+                    BigDecimal remainder = bdAmount.remainder(bdMultiple);
+                    BigDecimal differenceToSave = BigDecimal.ZERO;
+                    if (remainder.compareTo(BigDecimal.ZERO) != 0) {
+                        differenceToSave = bdMultiple.subtract(remainder);
+                    }
+                    if (differenceToSave.compareTo(BigDecimal.ZERO) > 0 &&
+                            fromCard.getBalance().compareTo(differenceToSave) >= 0)
+                    {
+
+                        Card savingsCard = findSavingsCard(user);
+                        fromCard.setBalance(
+                                fromCard.getBalance().subtract(differenceToSave)
+                        );
+                        savingsCard.setBalance(
+                                savingsCard.getBalance().add(differenceToSave)
+                        );
+
+                        cardService.saveCard(fromCard);
+                        cardService.saveCard(savingsCard);
+                    }
+                }
+            }
             return ResponseEntity.ok("Bill payment completed successfully.");
 
         } catch (Exception e) {
@@ -593,6 +654,29 @@ public class CardController {
         }
     }
 
+    @GetMapping("/savings-total")
+    public ResponseEntity<?> getSavingsTotal(@RequestHeader("Authorization") String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body("Missing or invalid token");
+        }
+        String jwt = token.substring(7).trim();
+        if (!jwtUtil.validateToken(jwt)) {
+            return ResponseEntity.status(401).body("Invalid token");
+        }
+
+        String contact = jwtUtil.extractContact(jwt);
+        User user = userService.findByContact(contact).orElse(null);
+        if (user == null) return ResponseEntity.status(404).body("User not found");
+
+        Card savingsCard = cardService.findCardsByUser(user).stream()
+                .filter(c -> "Savings".equalsIgnoreCase(c.getPersonalizedName()))
+                .findFirst()
+                .orElse(null);
+
+        if (savingsCard == null) return ResponseEntity.status(404).body("Savings card not found");
+
+        return ResponseEntity.ok(Map.of("totalSaved", savingsCard.getBalance()));
+    }
 
 
 

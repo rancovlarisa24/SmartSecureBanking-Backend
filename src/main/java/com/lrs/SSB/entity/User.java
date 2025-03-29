@@ -43,6 +43,12 @@ public class User {
     @Column(name = "blockchain_private_key", length = 66)
     private String blockchainPrivateKey;
 
+    @Column(name = "savings_active", nullable = false)
+    private boolean savingsActive = false;
+
+    @Column(name = "rounding_multiple", nullable = false)
+    private int roundingMultiple = 0;
+
     public Integer getId() {
         return id;
     }
@@ -137,5 +143,21 @@ public class User {
 
     public void setBlockchainPrivateKey(String blockchainPrivateKey) {
         this.blockchainPrivateKey = blockchainPrivateKey;
+    }
+
+    public boolean isSavingsActive() {
+        return savingsActive;
+    }
+
+    public void setSavingsActive(boolean savingsActive) {
+        this.savingsActive = savingsActive;
+    }
+
+    public int getRoundingMultiple() {
+        return roundingMultiple;
+    }
+
+    public void setRoundingMultiple(int roundingMultiple) {
+        this.roundingMultiple = roundingMultiple;
     }
 }
