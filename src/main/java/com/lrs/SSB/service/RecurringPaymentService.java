@@ -28,6 +28,9 @@ public class RecurringPaymentService {
     private BlockchainService blockchainService;
 
     @Autowired
+    private VirtualCardService virtualCardService;
+
+    @Autowired
     public RecurringPaymentService(RecurringPaymentRepository repository) {
         this.repository = repository;
     }
@@ -64,10 +67,19 @@ public class RecurringPaymentService {
             throw new Exception("Source card not found for payment " + payment.getId());
         }
         Card fromCard = fromCardOpt.get();
-
+        boolean isVirtual = fromCard.getBankIssuer() != null &&
+                fromCard.getBankIssuer().equalsIgnoreCase("Virtual SSB");
+        Card effectiveSourceCard = fromCard;
+        if (isVirtual) {
+            Optional<Card> underlyingCardOpt = virtualCardService.getUnderlyingCard(fromCard.getId().longValue());
+            if (underlyingCardOpt.isEmpty()) {
+                throw new Exception("Underlying funding card not found for payment " + payment.getId());
+            }
+            effectiveSourceCard = underlyingCardOpt.get();
+        }
         double amount = payment.getAmount();
-        if (fromCard.getBalance().doubleValue() < amount) {
-            throw new Exception("Insufficient fonds for card " + payment.getId());
+        if (effectiveSourceCard.getBalance().doubleValue() < amount) {
+            throw new Exception("Insufficient funds for payment " + payment.getId());
         }
 
         String blockchainPrivateKey = payment.getBlockchainPrivateKey();
@@ -79,19 +91,20 @@ public class RecurringPaymentService {
             throw new Exception("Cardul destinatar nu a fost găsit pentru plata cu id " + payment.getId());
         }
         Card toCard = toCardOpt.get();
-        String sourceId = fromCard.getId().toString();
+        String sourceId = effectiveSourceCard.getId().toString();
         String destId = toCard.getId().toString();
         BigInteger amountBI = BigInteger.valueOf((long) amount);
         boolean validated = blockchainService.validateTransferOnBlockchain(sourceId, destId, amountBI, blockchainPrivateKey);
         if (!validated) {
             throw new Exception("Validarea pe blockchain a eșuat pentru plata cu id " + payment.getId());
         }
-        fromCard.setBalance(fromCard.getBalance().subtract(BigDecimal.valueOf(amount)));
+        effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(BigDecimal.valueOf(amount)));
         toCard.setBalance(toCard.getBalance().add(BigDecimal.valueOf(amount)));
-        cardService.saveCard(fromCard);
+        cardService.saveCard(effectiveSourceCard);
         cardService.saveCard(toCard);
+        Long sourceForTransaction = isVirtual ? Long.valueOf(fromCard.getId()) : Long.valueOf(effectiveSourceCard.getId());
         transactionService.saveTransaction(
-                cardId,
+                sourceForTransaction,
                 BigDecimal.valueOf(amount),
                 TransactionType.valueOf("RECURRENT"),
                 payment.getServiceName(),
@@ -111,12 +124,11 @@ public class RecurringPaymentService {
                     differenceToSave = bdMultiple.subtract(remainder);
                 }
                 if (differenceToSave.compareTo(BigDecimal.ZERO) > 0 &&
-                        fromCard.getBalance().compareTo(differenceToSave) >= 0) {
+                        effectiveSourceCard.getBalance().compareTo(differenceToSave) >= 0) {
                     Card savingsCard = findSavingsCard(user);
-                    fromCard.setBalance(fromCard.getBalance().subtract(differenceToSave));
+                    effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(differenceToSave));
                     savingsCard.setBalance(savingsCard.getBalance().add(differenceToSave));
-
-                    cardService.saveCard(fromCard);
+                    cardService.saveCard(effectiveSourceCard);
                     cardService.saveCard(savingsCard);
                 }
             }

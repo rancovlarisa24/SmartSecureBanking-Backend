@@ -3,10 +3,7 @@ package com.lrs.SSB.controller;
 import com.lrs.SSB.entity.Card;
 import com.lrs.SSB.entity.User;
 import com.lrs.SSB.entity.Utility;
-import com.lrs.SSB.service.CardService;
-import com.lrs.SSB.service.PayPalService;
-import com.lrs.SSB.service.UserService;
-import com.lrs.SSB.service.UtilityService;
+import com.lrs.SSB.service.*;
 import com.lrs.SSB.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,6 +32,8 @@ public class CardController {
     @Autowired
     private UtilityService utilityService;
 
+    @Autowired
+    private VirtualCardService virtualCardService;
     @Autowired
     private JwtUtil jwtUtil;
     private Utility utility;
@@ -161,8 +160,10 @@ public class CardController {
         User user = userOpt.get();
         List<Card> userCards = cardService.findCardsByUser(user);
         double totalBalance = userCards.stream()
+                .filter(card -> card.getBankIssuer() == null || !card.getBankIssuer().equalsIgnoreCase("Virtual SSB"))
                 .mapToDouble(card -> card.getBalance().doubleValue())
                 .sum();
+
 
         return ResponseEntity.ok(Map.of("totalBalance", totalBalance));
     }
@@ -240,6 +241,12 @@ public class CardController {
         if (!card.getUser().getId().equals(user.getId())) {
             return ResponseEntity.status(403).body("You do not have permission to delete this card.");
         }
+
+        if (card.getBankIssuer() != null && card.getBankIssuer().equalsIgnoreCase("Virtual SSB")) {
+            virtualCardService.deleteVirtualCardBySourceCardId(card.getId());
+        }
+
+
         cardService.deleteCard(cardId);
         return ResponseEntity.ok(Map.of("message", "Card deleted successfully."));
     }
@@ -437,9 +444,24 @@ public class CardController {
             return ResponseEntity.status(403).body("You do not own the source card.");
         }
 
-        if (fromCard.getBalance().doubleValue() < amount) {
+        boolean isVirtual = fromCard.getBankIssuer() != null &&
+                fromCard.getBankIssuer().equalsIgnoreCase("Virtual SSB");
+
+        Card effectiveSourceCard = fromCard;
+        if (isVirtual) {
+            Optional<Card> underlyingCardOpt = virtualCardService.getUnderlyingCard(fromCard.getId().longValue());
+
+            if (underlyingCardOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Underlying funding card not found for virtual card.");
+            }
+            effectiveSourceCard = underlyingCardOpt.get();
+        }
+
+        if (effectiveSourceCard.getBalance().doubleValue() < amount) {
             return ResponseEntity.badRequest().body("Insufficient balance in source card.");
         }
+
+
 
         if (toCardId != -1) {
             Optional<Card> toCardOpt = cardService.findById(toCardId);
@@ -450,10 +472,10 @@ public class CardController {
             if (!toCard.getUser().getId().equals(user.getId())) {
                 return ResponseEntity.badRequest().body("Destination card does not belong to you.");
             }
-            fromCard.setBalance(fromCard.getBalance().subtract(BigDecimal.valueOf(amount)));
+            effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(BigDecimal.valueOf(amount)));
             toCard.setBalance(toCard.getBalance().add(BigDecimal.valueOf(amount)));
 
-            cardService.saveCard(fromCard);
+            cardService.saveCard(effectiveSourceCard);
             cardService.saveCard(toCard);
 
         } else {
@@ -476,10 +498,10 @@ public class CardController {
                 return ResponseEntity.badRequest().body("Beneficiary user has no card with the provided IBAN.");
             }
             Card destinationCard = destinationOpt.get();
-            fromCard.setBalance(fromCard.getBalance().subtract(BigDecimal.valueOf(amount)));
+            effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(BigDecimal.valueOf(amount)));
             destinationCard.setBalance(destinationCard.getBalance().add(BigDecimal.valueOf(amount)));
 
-            cardService.saveCard(fromCard);
+            cardService.saveCard(effectiveSourceCard);
             cardService.saveCard(destinationCard);
         }
 
@@ -498,10 +520,10 @@ public class CardController {
                         fromCard.getBalance().compareTo(differenceToSave) >= 0)
                 {
                     Card savingsCard = findSavingsCard(user);
-                    fromCard.setBalance(fromCard.getBalance().subtract(differenceToSave));
+                    effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(differenceToSave));
                     savingsCard.setBalance(savingsCard.getBalance().add(differenceToSave));
 
-                    cardService.saveCard(fromCard);
+                    cardService.saveCard(effectiveSourceCard);
                     cardService.saveCard(savingsCard);
 
                 }
@@ -585,7 +607,19 @@ public class CardController {
             if (!fromCard.getUser().getId().equals(user.getId())) {
                 return ResponseEntity.status(403).body("You do not own the source card.");
             }
-            if (fromCard.getBalance().doubleValue() < amount) {
+
+            boolean isVirtual = fromCard.getBankIssuer() != null &&
+                    fromCard.getBankIssuer().equalsIgnoreCase("Virtual SSB");
+            Card effectiveSourceCard = fromCard;
+            if (isVirtual) {
+                Optional<Card> underlyingCardOpt = virtualCardService.getUnderlyingCard(fromCard.getId().longValue());
+                if (underlyingCardOpt.isEmpty()) {
+                    return ResponseEntity.badRequest().body("Underlying funding card not found for virtual card.");
+                }
+                effectiveSourceCard = underlyingCardOpt.get();
+            }
+
+            if (effectiveSourceCard.getBalance().doubleValue() < amount) {
                 return ResponseEntity.badRequest().body("Insufficient balance on source card.");
             }
 
@@ -613,10 +647,10 @@ public class CardController {
             }
             Card providerCard = providerCardOpt.get();
 
-            fromCard.setBalance(fromCard.getBalance().subtract(BigDecimal.valueOf(amount)));
+            effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(BigDecimal.valueOf(amount)));
             providerCard.setBalance(providerCard.getBalance().add(BigDecimal.valueOf(amount)));
 
-            cardService.saveCard(fromCard);
+            cardService.saveCard(effectiveSourceCard);
             cardService.saveCard(providerCard);
 
             if (user.isSavingsActive()) {
@@ -631,18 +665,15 @@ public class CardController {
                         differenceToSave = bdMultiple.subtract(remainder);
                     }
                     if (differenceToSave.compareTo(BigDecimal.ZERO) > 0 &&
-                            fromCard.getBalance().compareTo(differenceToSave) >= 0)
+                            effectiveSourceCard.getBalance().compareTo(differenceToSave) >= 0)
+
                     {
 
                         Card savingsCard = findSavingsCard(user);
-                        fromCard.setBalance(
-                                fromCard.getBalance().subtract(differenceToSave)
-                        );
-                        savingsCard.setBalance(
-                                savingsCard.getBalance().add(differenceToSave)
-                        );
+                        effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(differenceToSave));
+                        savingsCard.setBalance(savingsCard.getBalance().add(differenceToSave));
 
-                        cardService.saveCard(fromCard);
+                        cardService.saveCard(effectiveSourceCard);
                         cardService.saveCard(savingsCard);
                     }
                 }
