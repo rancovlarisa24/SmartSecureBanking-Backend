@@ -1,0 +1,65 @@
+## Recurring Payments
+Automate your regular bills or transfers so you never miss a payment.
+
+### Where to find it
+1. From your **Dashboard**, tap the **Recurring payments** button (calendar icon).
+2. You’ll land on the **Recurring Payments** screen.
+
+---
+
+### Viewing your scheduled payments
+- If you haven’t set up any, you’ll see a message:
+  > You have no recurring payments.
+  and a **+** button in the bottom right to add one.
+- Otherwise, each payment appears as a card showing:
+  - **Service name** (what you’re paying)
+  - **Short description** (your note)
+  - **Next payment date**
+  - **Amount & currency** (e.g. “100USD”)
+  - **Frequency** (Daily/ Weekly/ Monthly/ Annually)
+  - **Card** (which of your cards will pay, with last 4 digits)
+  - **Status** (ACTIVE or PAUSED)
+
+---
+
+### Add a new recurring payment
+1. Tap the **+** button in the bottom right.
+2. Fill in the required fields:
+   - **User/Service name\*** – at least 3 characters
+   - **User/Service IBAN\*** – a valid IBAN in our system
+   - **Payment amount\*** – a number greater than 0
+   - **Frequency\*** – pick Daily, Weekly, Monthly, or Annually
+   - **Start date\*** – choose a future date
+   - **Card\*** – select one of your active cards
+3. (Optional) Add a **Short description** to remind yourself what it’s for.
+4. Tap **Save**. Any mistakes will be highlighted under each field.
+
+---
+
+### Pause or resume a payment
+- On a payment card, tap **Pause** to stop future runs.
+- That button turns into **Resume**—tap it to start again.
+
+---
+
+### Edit an existing payment
+1. Tap **Edit** on the payment card.
+2. Change any of these:
+   - Next payment date
+   - Amount
+   - Frequency
+   - Card
+3. Tap **Save** when you’re done.
+
+---
+
+### Cancel (delete) a payment
+1. Tap **Cancel** on the payment card.
+2. Confirm in the pop‑up.
+3. The payment will be removed forever.
+
+---
+
+### Tips & reminders
+- Use clear names (e.g. “Gym membership” or “Electric bill”) so you recognize them.
+- Check your card’s balance occasionally—if it’s too low, the payment will pause automatically.

@@ -1,0 +1,29 @@
+## Account Management
+Quickly view your profile info, update your avatar, or sign out—right from your Dashboard.
+
+### 1. Open the Manage Account screen
+- On your **Dashboard**, locate the card showing your name and funds.
+- Tap the **Manage your account** button (the one with the user‑icon).
+- You’ll be taken to the **Manage Account** screen.
+
+### 2. View your username
+- At the top of **Manage Account**, your username is displayed.
+- It’s fetched automatically from the server each time you open the screen.
+
+### 3. Add or change your profile picture
+- Tap your current avatar (or the default icon if none is set).
+- Select a photo from your device’s gallery.
+- The new image uploads immediately and replaces your old one.
+- **Tip:** If you see a network error, verify your internet connection and that the app has gallery permissions.
+
+### 4. Log out
+- Tap the **Log out** button at the bottom of the screen.
+- You’ll be signed out and taken back to the login screen.
+- Your session token is removed from local storage for security—ideal on shared devices.
+
+---
+
+**Internal APIs used**
+- `GET /api/users/get-username` → fetch current username
+- `POST /api/users/upload-profile-image` → upload new avatar
+- `POST /api/users/logout` → invalidate your session token

@@ -1,0 +1,28 @@
+## Dashboard
+Your “home base” where you see an overview of your account and navigate to key features.
+
+### How to open
+- After logging in, you land automatically on the **Dashboard** screen.
+
+### Screen layout
+- **Side menu** for global navigation.
+- **Top‑right icons**:
+  - ❤️Heart → your favorite articles
+  - 🔔Bell → notifications
+
+### Account summary card
+- The card shows:
+  - **Your name**
+  - **Total balance** of all your cards in USD
+- Inside that card are two buttons:
+  -**Manage your account** → opens **Manage Account**
+  -**Manage your debit cards** → opens **Cards**
+
+### Quick‑access buttons
+Just below the summary card, three big buttons take you directly to:
+- **Recurring payments**  screen
+- **Money transfer**  screen
+- **Bill payment**  screen
+
+### Financial education
+- Scroll down to see the **Financial education** section, where you can browse articles and save them to favorites.

@@ -1,0 +1,82 @@
+## Insurance
+Everything you need to compare, purchase, and manage your insurance policies.
+
+### How to open
+1. Open the **Side Menu**.
+2. Tap **Insurance policy**.
+
+The app shows the **Insurance Hub** screen (see below).
+
+### Insurance Hub
+An introductory screen that explains your options and starts the purchase flow.
+
+#### Screen layout
+- **Hero image** – shield/umbrella icon.
+- **Title** – “Insurance”.
+- **Explanation** – short paragraph about the policy types you can buy (Auto, Health, Home).
+- **“How it works” mini‑guide** – three steps:
+  1. *Compare offers*
+  2. *Complete the form*
+  3. *Confirm and pay*
+- **Purchase policy** – large gradient button that opens *Available insurances*.
+
+### Available insurances
+Where you actually choose a policy.
+
+#### Screen layout
+- **Category sections** – policies are grouped automatically into **Auto**, **Health**, and **Home**.
+- Each policy card shows:
+  - ▼ Title
+  - ▼ Price, Coverage, Benefits
+  - ▼ Provider
+  - **Choose** – gradient button that starts the purchase flow for that policy.
+- **My Insurances** – simple button below the list; opens *Purchased insurances*.
+
+### Purchase flow
+A dynamic three‑step form: enter asset/person details, pick a payment card, and confirm.
+
+#### Step 1 – Enter asset details
+The form adapts to the category:
+
+- **Auto** – Brand, Model, Manufacturing Year, VIN/Registration, Damage history (optional).
+- **Health** – First name, Last name, Birthdate, Pre‑existing conditions (optional).
+- **Home** – Property address, Area, Construction year, Construction details (optional).
+
+> **Tip:** Fields marked with “*” are required; errors appear under the form if something is missing.
+
+#### Step 2 – Select payment card
+- A horizontal list shows all your active cards.
+- Tap a card to select it (gold border = selected).
+- If no active cards exist → message “No active cards available.”
+
+#### Step 3 – Confirm & pay
+- The **Purchase** button sends `POST /api/user-insurances`.
+- On success → “Success” alert and redirect to *Purchased insurances*.
+
+### Purchased insurances
+A carousel containing every policy you’ve bought, displayed one at a time.
+
+#### Screen layout
+- **Infinite carousel** – swipe horizontally; pagination dots under the card.
+- Each card shows:
+  - Header with the policy title.
+  - Two‑column pairs: Category / Price, Coverage / Provider.
+  - Benefits as a text block.
+  - **Insured asset** – section that displays the extra fields entered at purchase (e.g., VIN, address, birthdate).
+
+> **Navigation tip:** If you have only one policy, the carousel behaves like a static card with no pagination dots.
+
+---
+
+### FAQ
+**Can I edit a policy after I buy it?**
+Not directly in the app. Contact the insurer for changes.
+
+**Do policies renew automatically?**
+Not yet. You’ll receive notifications before the expiry date.
+
+**What if I don’t have an active card?**
+Add or activate a card in **Virtual card** or **Cards**, then return to the payment step.
+
+**How can I view my policies later?**
+Side Menu → **Insurance policy** → **Purchase policy** → button **My Insurances**.

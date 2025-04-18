@@ -1,0 +1,62 @@
+## Add Card
+Register a new physical debit or credit card so you can fund transfers, virtual cards, automatic savings, and more.
+
+### How to open
+1. Go to **Dashboard** (Home).
+2. On the **Account summary card** tap **Manage your debit cards**.
+3. Inside the **Cards** manager tap the floating action button ** Add new card**.
+   → The **Add new Card** form opens.
+
+### Add Card screen
+A guided form that validates every detail before saving the card to your profile.
+
+#### Screen layout
+- **Card preview** – stylised mock‑up at the top (chip, masked number, holder, expiry).
+- **Input form** – seven stacked fields:
+  1. **Cardholder name**
+  2. **Card number** – auto‑formats as you type
+  3. **IBAN** – supports RO, DE, FR, IT, GB, NL, ES, PT; checks format & checksum.
+  4. **Expiry (MM/YYYY)** – auto‑inserts “/”, rejects past dates.
+  5. **CVV** – 3 digits, eye icon toggles visibility.
+  6. **Available balance** – digits with optional decimals (.xx).
+  7. **Personalised card name** – friendly label shown in app lists.
+- **Save Card** button – stays disabled until every field is valid.
+
+#### Real‑time validations
+| Field | Validation rules |
+| --- | --- |
+| Card number | 16 digits, Luhn algorithm. |
+| IBAN | Country‑specific length, structure, modulo‑97 checksum. |
+| Expiry | Exact `MM/YYYY` format, must be a future date. |
+| CVV | Exactly 3 digits. |
+| Balance | Numeric, up to two decimals, > 0. |
+
+Inline error messages appear in red beneath any field that fails validation.
+
+#### Behind‑the‑scenes steps on **Save Card**
+1. **BIN lookup** – first 6 digits sent to `https://lookup.binlist.net/{BIN}`; auto‑fills *Bank issuer* and *Currency*.
+2. **PayPal check** – `POST /api/card/validate` confirms the card can authorise online payments.
+3. **Secure save** – `POST /api/card/add` (with auth token) stores the encrypted card data.
+4. **Success alert** – “Card successfully validated!” and automatic return to the **Cards** manager.
+
+### After saving
+- The new card appears in **Cards** with your personalised name.
+- It becomes selectable in: Money transfer, Virtual Card funding, Automatic Savings, etc.
+
+---
+
+### FAQ
+**Why is the IBAN required?**
+It lets you receive incoming transfers and FX top‑ups directly to the card account.
+
+**Is my CVV stored?**
+No. Only a tokenised hash is kept; the raw CVV never touches our servers.
+
+**My card was rejected – what next?**
+Ensure number, expiry, and CVV are correct. Pre‑paid or region‑restricted cards can fail the PayPal check.
+
+**Can I edit a saved card?**
+You can rename or deactivate it in **Cards**. To change the number, expiry or CVV, delete the card and add it again.
+
+**Which currencies are supported?**
+Any currency issued by your bank. The BIN lookup fills in the primary currency, and the app converts automatically when you spend.

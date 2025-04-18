@@ -1,0 +1,68 @@
+## Virtual Card
+Generate a one‑time or reusable virtual card for safer online payments.
+
+### How to open
+1. Open the **Side Menu**.
+2. Tap **Virtual card**.
+
+The app shows the **Virtual Card Hub** (see below).
+
+### Virtual Card Hub
+A simple intro screen that explains the feature and starts the creation flow.
+
+#### Screen layout
+- **Hero image** – illustration of a digital card.
+- **Title** – “Virtual Card”.
+- **Explanation** – short paragraph on why virtual cards add an extra layer of security for online purchases.
+- **“How it works” mini‑guide** – three steps:
+  1. *Choose the associated card*
+  2. *Set the transaction limit*
+  3. *Customize the card name*
+- **Generate Card** – large gradient button that opens the *Create Virtual Card* screen.
+
+### Create Virtual Card
+A three‑step form that guides you through card generation.
+
+#### Step 1 – Pick a funding card
+- A horizontal list shows all your active physical cards.
+- Tap a card to select it (gold border = selected).
+- If no active cards exist → message “No active cards available.”
+
+#### Step 2 – Set transaction limit (USD)
+- Enter the maximum amount that any single transaction on the virtual card can reach (e.g., **100.00**).
+- The field validates for numeric value > 0 and shows inline errors if something is wrong.
+
+#### Step 3 – Choose a personalized name
+- Give the card a friendly label (e.g., “Netflix 2025” or “Holiday Shopping”).
+- Helps you recognize the card later in statements.
+
+#### Confirm
+- Tap **Generate Virtual Card** to send `POST /api/virtual-cards/create` with:
+  - userId,
+  - selectedCardId,
+  - transactionLimit,
+  - personalizedName.
+- On success → “Success” alert and automatic navigation back to the Dashboard.
+
+### What happens next
+- A brand‑new card number, CVV, and expiry date are created server‑side.
+- The virtual card draws funds from the physical card you selected.
+- You can pause or delete the virtual card from the **Cards** section.
+
+---
+
+### FAQ
+**Can I adjust the limit later?**
+Not yet. Delete the old virtual card and create a new one with a fresh limit.
+
+**Where do I see the card details?**
+After generation, the details appear in the confirmation dialog and in your **Cards** list.
+
+**Is there a cost?**
+No. Virtual card generation is free for Smart Secure Banking customers.
+
+**Does the virtual card expire?**
+Yes – each card has its own expiry date (usually 12 months).
+
+**What currencies are supported?**
+The transaction limit is set in USD, but the virtual card works globally; currency conversion follows the rules of your funding card.

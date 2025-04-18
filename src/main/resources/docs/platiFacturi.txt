@@ -1,0 +1,47 @@
+## Bill Payments
+Pay your household bills in just a few taps.
+
+### 1. Open the Bill Payment screen
+- From your **Dashboard**, tap the **Bill payment** button (third icon in the quick‑access row).
+- The app will automatically load your active cards and available providers.
+
+### 2. Enter your payment details
+1. **Payment Card**: choose the card to pay from
+2. **Provider***: pick your utility company from the dropdown
+3. **Client Code***: enter the code your provider gave you
+4. **Invoice Number***: type the bill’s invoice number
+5. **Amount Due***: enter the exact amount you owe
+
+### 3. Double‑check everything
+- All fields marked `*` must be filled.
+- Client Code → letters and numbers, 4–20 characters
+- Invoice Number → digits only, 5–15 characters
+- Amount → positive number, not above your card balance
+
+### 4. Review and confirm
+- Tap **Next** to see the **Payment Summary**:
+  - Card used
+  - Provider
+  - Client Code
+  - Invoice Number
+  - Amount
+- If it’s all correct, enter your **password** to finish.
+
+### 5. Complete the payment
+- The app will verify your password, process the payment, and save it to your transaction history.
+- You’ll see a **Payment Confirmed** message when it’s done.
+
+### 6. If something goes wrong
+- Error alerts will explain what to fix (e.g. invalid code, insufficient funds).
+- Check your internet connection and try again if you see a network error.
+- You can always tap **Back** to adjust any information before confirming.
+
+---
+
+**Behind the scenes**
+The app uses these internal APIs to make it all happen:
+- `GET /api/card/user-cards`
+- `GET /api/utilities`
+- `POST /api/users/verify-password`
+- `POST /api/card/pay-bill`
+- `POST /api/transactions/save`
