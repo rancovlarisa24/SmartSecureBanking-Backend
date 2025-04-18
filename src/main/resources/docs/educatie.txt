@@ -1,0 +1,62 @@
+## Financial Education
+Curated articles that help you master budgeting, saving, and investing.
+
+### How to open
+1. Go to **Dashboard**.
+2. Scroll down until you see the **Financial education** section (just below the quick‑access buttons).
+
+Optional:
+Tap the ❤️ **Favorites** icon in the top‑right corner of the Dashboard to open your **Saved articles** list.
+
+### Financial education section
+A horizontal carousel that refreshes on every visit.
+
+#### Screen layout
+- **Article cards** (width ≈ 335 px) slide left/right. Each card shows:
+  - Title (max 2 lines)
+  - Short description (max 3 lines)
+  - **Continue reading** button – opens the full article in your browser.
+  - Heart icon in the top‑right corner to save/unsave.
+- **Pagination dots** – max 5 dots centred under the carousel; the active dot loops when more than 5 articles.
+- **Auto‑shuffle** – articles are randomly reordered on each visit so the feed feels fresh.
+
+#### Interactions
+| Action | Result |
+| --- | --- |
+| Tap heart (empty) | Saves the article via `POST /api/articles` and turns the icon solid. |
+| Tap heart (solid) | Removes the article via `DELETE /api/articles` and turns the icon empty. |
+| Tap **Continue reading** | Opens the article URL in your default browser. |
+| Swipe left/right | Moves to the next/previous article. |
+
+### Saved articles screen
+A simple list of everything you’ve favourited.
+
+#### Screen layout
+- Header row with the same heart icon (for context).
+- **FlatList** of saved articles; each row uses the *ArticolSalvat* component and repeats the same card design as the carousel.
+- If the list is empty → message **“No saved articles”**.
+- Heart icon on each row lets you unsave directly from this screen.
+
+### How it works (behind the scenes)
+1. **Source** – NewsAPI pulls recent content from Forbes, Investopedia, NerdWallet, etc.
+2. **Transform** – The app maps each article to *id, title, description, url* and shuffles the list.
+3. **Save logic** – For logged‑in users, favourites are stored server‑side (`/api/articles`) together with their user ID.
+4. **Sync on focus** – Each time the Dashboard regains focus the component fetches fresh articles *and* your saved list to keep hearts in sync.
+
+---
+
+### FAQ
+**Are articles stored offline?**
+No. The app keeps only the link and metadata; the full content opens in your browser.
+
+**How many articles can I save?**
+Up to 50. When you reach the limit the oldest favourite is removed automatically.
+
+**Why do I sometimes see the same article again?**
+The feed reshuffles on each visit. If you want to hide an item permanently, tap the heart to save it; saved items are excluded from the shuffle feed.
+
+**Can I filter by topic?**
+Filtering is coming soon. For now the feed mixes budgeting, saving, investing and general literacy tips.
+
+**What if a link is broken?**
+Long‑press the card and choose **Report broken link** (feature in beta), or simply unsave it so it disappears from your feed next time.

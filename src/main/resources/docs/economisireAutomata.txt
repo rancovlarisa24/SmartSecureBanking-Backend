@@ -1,0 +1,54 @@
+## Automatic Savings
+A round‑up feature that tucks away spare change every time you spend.
+
+### How to open
+1. Open the **Side Menu**.
+2. Tap **Automatic Savings**.
+Depending on status, one of the two screens below appears.
+
+### Activate Automatic Savings (screen shown when feature is *inactive*)
+Introduces the concept and lets you enable it.
+
+#### Screen layout
+- **Hero image** – animated savings‑jar.
+- **Title** – “Automatic Savings”.
+- **Explanation** – short paragraph explaining round‑ups in plain language.
+- **“How it works” mini‑guide** (three icons in a row):
+  1. *Pay* with your card.
+  2. We *round up* to the nearest dollar (or chosen multiple).
+  3. The *difference* moves instantly into your savings pocket.
+- **Activate Now** – big gradient button at the bottom.
+
+#### What happens when you press **Activate Now**
+- The app calls `POST /api/users/activate‑savings` with your auth token.
+- On success the nav stack resets to **Dashboard → Automatic Savings Active** so you never land back on an outdated screen.
+
+### Automatic Savings Active (screen shown when feature is *active*)
+Lets you monitor progress, change the rounding multiple, or deactivate.
+
+#### Screen layout
+- **Saved‑so‑far card**
+  - Text: “You have saved so far:”
+  - **Live amount** in USD (via `GET /api/card/savings‑total`).
+  - Jar icon for visual reinforcement.
+- **Status row**
+  - Badge **“Round Up Activated”**.
+  - **Deactivate** gradient button.
+- **Rounding Multiple** section
+  - Mini‑tutorial + two worked examples so the idea is crystal‑clear.
+  - Three radio buttons: **1 USD**, **5 USD**, **10 USD**.
+  - Changing the value calls `POST /api/users/update‑rounding‑multiple` and updates the UI instantly.
+
+#### Available actions
+- **Deactivate** → `POST /api/users/deactivate‑savings`; nav stack resets to **Dashboard → Activate Automatic Savings**.
+- **Pick a new multiple** → updates backend and applies to all future round‑ups immediately.
+
+### FAQ
+**What if I pay in another currency?**
+We convert to USD first, then apply your rounding multiple.
+
+**Can I withdraw the money I’ve saved?**
+Yes. Use the **Money transfer** screen to move it out anytime.
+
+**Are there any fees?**
+No. Automatic Savings is a free feature for all Smart Secure Banking customers.

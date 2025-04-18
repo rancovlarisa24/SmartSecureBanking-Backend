@@ -1,0 +1,25 @@
+## Side Menu
+Your slide‑out navigator that lets you reach every major feature with a single tap.
+
+### How to open
+- Tap the **☰ menu icon** in the top‑left corner of any screen.
+
+### Screen layout
+- **Header**
+  - App logo + title **“Smart Secure Banking”**.
+- **Scrollable list** of main navigation items (see below).
+- **Dimmed overlay** on the rest of the UI while the menu is open.
+- **Ask Lary shortcut** (robot icon + text) anchored at the bottom.
+
+### Navigation items
+Tap any entry to jump straight to that feature:
+- **Dashboard** → account overview & quick actions.
+- **Currency exchange** → live FX rates & conversions.
+- **Automatic Savings** → opens either *Activate* or *Active* screen, depending on your status.
+- **Insurance policy** → browse or purchase insurance.
+- **Investments** → explore funds, bonds and more.
+- **Virtual card** → generate and manage your digital card.
+- **Loans** → view existing loans or start an application.
+- **Ask Lary** → chat with the in‑app AI assistant.
+
+---

@@ -1,0 +1,56 @@
+## Card Management
+Easily view, add, rename, block, delete or get reports on your cards—right from your Dashboard.
+
+### 1. Open the Cards screen
+- On your **Dashboard**, find the box showing your name and “Current funds”.
+- Tap the **Manage your debit cards** button (the one with the credit‑card icon).
+- You’ll be taken to the **Cards** screen listing all your active cards.
+
+### 2. Add a new card
+- Tap **Add new card** at the top of the **Cards** screen.
+- Enter card details (number, expiry, CVV, etc.) and tap **Save**.
+- Your new card instantly appears in the list.
+
+### 3. View card details
+- Tap on any card in the list to select it.
+- Tap **View card details** in the action row.
+- Enter your password when prompted.
+- Full details (CVV, IBAN, etc.) show for 60seconds, then auto‑hide for security.
+
+### 4. Generate a bank report (PDF)
+- With a card selected, tap **Bank report**.
+- Enter your password to confirm.
+- The app generates and opens a PDF of that card’s transactions.
+
+### 5. Rename a card
+- Select the card you want to rename.
+- Tap **Rename card**.
+- Type a new name (e.g. “Travel Fund”) and tap **Save**.
+- The list updates immediately.
+> **Note:** Cards named “Savings” cannot be renamed.
+
+### 6. Block or unblock a card
+- Select your card.
+- Tap **Block card** (or **Unblock card** if already blocked).
+- Confirm in the dialog and enter your password.
+- Status toggles between **ACTIVE** and **BLOCKED**.
+
+### 7. Delete a card
+- Select a card.
+- Tap **Remove card**.
+- Confirm deletion after entering your password.
+- The card is permanently removed.
+
+### 8. View transaction history
+- Scroll down on the **Cards** screen below the action buttons.
+- Your recent transactions appear, showing date, amount, beneficiary and type.
+
+---
+
+**APIs used**
+- `GET /api/card/user-cards` → load your active cards
+- `PUT /api/card/update-name` → rename a card
+- `PUT /api/card/block/{id}` / `PUT /api/card/unblock/{id}` → block/unblock
+- `DELETE /api/card/delete/{id}` → delete a card
+- `GET /api/transactions/card/{id}` → fetch transactions
+- `GET /api/card/report/{id}` → generate PDF report

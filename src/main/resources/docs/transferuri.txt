@@ -1,0 +1,53 @@
+## Transfers
+Move money quickly between your own cards or send to someone else—right from your Dashboard.
+
+### 1. Open the transfer form
+- On your **Dashboard**, look for the row of three large white buttons just below your balance card.
+- Tap the **middle** button labeled **Money transfer**
+
+### 2. Pick “To my own card” or “To someone else”
+- **To my own card**: send between your linked cards.
+- **To someone else**: send to any valid IBAN.
+
+### 3. Complete the form
+- **Source Card***: tap and choose which of your cards will pay.
+- **Transfer Type***: pick “To my own card” or “To someone else.”
+- **Destination Card (own)** (internal only): pick your target card (all except the one you just chose).
+- **Beneficiary Name*** (external only): type the recipient’s name or service.
+- **Beneficiary IBAN*** (external only): enter the destination IBAN.
+- **Amount***: type how much you want to send (must be more than 0 and no more than your source card’s balance).
+
+### 4. Instant checks on your device
+- We flag any empty or incorrectly formatted fields (e.g. too‑short IBAN, non‑numeric amount).
+- For “To someone else,” we auto‑verify the IBAN via our `/api/card/verify-beneficiary` endpoint.
+- We ensure you don’t send more than you have.
+
+### 5. Review and confirm
+- Once everything looks good, you’ll see a **Transfer Summary** screen showing:
+  - Your **Source Card**
+  - Your **Destination Card** (or the **Beneficiary Name + IBAN**)
+  - The **Amount**
+- Enter your app **password** to finalize.
+
+### 6. Behind the scenes
+1. We verify your password (`POST /api/users/verify-password`).
+2. We fetch your blockchain key (`GET /api/users/get-blockchain-key`).
+3. We submit the transfer (`POST /api/card/transfer`) with:
+   - `fromCardId`, `destId` (card ID or resolved IBAN card ID),
+   - `amount`, `transactionType`, `beneficiaryName`/`beneficiaryIban`.
+4. We log it in your history (`POST /api/transactions/save`).
+
+### 7. If something goes wrong
+- Any network or server errors pop up as alerts.
+- Fields with problems show an error message underneath.
+- When it succeeds, you’ll see a “Transfer successful” alert and the form will clear.
+
+---
+
+**APIs at work:**
+- `GET /api/card/user-cards` → your list of active cards & balances
+- `POST /api/card/verify-beneficiary` → check an external IBAN
+- `POST /api/users/verify-password` → confirm you’re you
+- `GET /api/users/get-blockchain-key` → grab your private key
+- `POST /api/card/transfer` → send the money
+- `POST /api/transactions/save` → record it in history
