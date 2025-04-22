@@ -13,5 +13,5 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     void deleteById(Long cardId);
     Optional<Card> findByIban(String iban);
     List<Card> findByUser_Id(Long userId);
-
+    Optional<Card> findByUserAndCardCurrency(User user, String cardCurrency);
 }

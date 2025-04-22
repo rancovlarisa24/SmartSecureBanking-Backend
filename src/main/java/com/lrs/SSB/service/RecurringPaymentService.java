@@ -91,6 +91,14 @@ public class RecurringPaymentService {
             throw new Exception("Cardul destinatar nu a fost găsit pentru plata cu id " + payment.getId());
         }
         Card toCard = toCardOpt.get();
+
+        String sourceCurrency = effectiveSourceCard.getCardCurrency();
+        String destCurrency   = toCard.getCardCurrency();
+        if (!sourceCurrency.equalsIgnoreCase(destCurrency)) {
+            throw new Exception("Currency mismatch: source card is in "
+                    + sourceCurrency + " but destination card is in "
+                    + destCurrency + " (payment id " + payment.getId() + ")");
+        }
         String sourceId = effectiveSourceCard.getId().toString();
         String destId = toCard.getId().toString();
         BigInteger amountBI = BigInteger.valueOf((long) amount);
