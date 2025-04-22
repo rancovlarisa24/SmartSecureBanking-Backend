@@ -42,5 +42,7 @@ public class CardService {
         return cardRepository.findByUser_Id(userId);
     }
 
-
+    public Optional<Card> findByUserAndCurrency(User user, String currency) {
+        return cardRepository.findByUserAndCardCurrency(user, currency);
+    }
 }

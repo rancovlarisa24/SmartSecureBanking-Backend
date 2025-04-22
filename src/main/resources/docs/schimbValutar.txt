@@ -1,0 +1,20 @@
+##Currency exchange
+Convert instantly between your own wallets in different currencies, with live rates and different currencies card creation.
+
+##How to open
+-Tap the ☰ menu icon in the top‑left corner.
+-Select Currency exchange.
+
+How to use
+-Choose your source currency: Tap the flag + code picker on the left panel.
+-Select a source card:Swipe through your cards in that currency and tap the one you want.
+-Enter an amount:Type your amount into the “0.00” field (use . for decimals).
+-Choose your target currency:Tap the flag + code picker on the right panel.
+-Select a destination card: Swipe to pick an existing wallet, or leave it blank—our app will auto‑create a new card in that currency.
+-See your converted total:The converted amount updates live below the right panel.
+-Execute the exchange:Tap Exchange;
+
+#Validation & errors
+-If you enter an invalid amount or leave the source card unselected, you’ll see a Validation or Selection alert.
+-Network or rate‑fetch failures trigger an Error alert.
+-New cards are created automatically when needed—no extra steps!

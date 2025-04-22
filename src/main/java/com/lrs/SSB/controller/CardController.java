@@ -1,6 +1,7 @@
 package com.lrs.SSB.controller;
 
 import com.lrs.SSB.entity.Card;
+import com.lrs.SSB.entity.TransactionType;
 import com.lrs.SSB.entity.User;
 import com.lrs.SSB.entity.Utility;
 import com.lrs.SSB.service.*;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,13 @@ public class CardController {
 
     @Autowired
     private VirtualCardService virtualCardService;
+
+    @Autowired private TransactionService transactionService;
+
+    @Autowired
+    private BlockchainService blockchainService;
+
+
     @Autowired
     private JwtUtil jwtUtil;
     private Utility utility;
@@ -472,6 +481,16 @@ public class CardController {
             if (!toCard.getUser().getId().equals(user.getId())) {
                 return ResponseEntity.badRequest().body("Destination card does not belong to you.");
             }
+
+            String sourceCurrency = effectiveSourceCard.getCardCurrency();
+            String destCurrency   = toCard.getCardCurrency();
+            if (!sourceCurrency.equalsIgnoreCase(destCurrency)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Currency mismatch: source card is in " + sourceCurrency +
+                                ", destination card is in " + destCurrency + ".");
+            }
+
             effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(BigDecimal.valueOf(amount)));
             toCard.setBalance(toCard.getBalance().add(BigDecimal.valueOf(amount)));
 
@@ -498,6 +517,16 @@ public class CardController {
                 return ResponseEntity.badRequest().body("Beneficiary user has no card with the provided IBAN.");
             }
             Card destinationCard = destinationOpt.get();
+
+            String sourceCurrency = effectiveSourceCard.getCardCurrency();
+            String destCurrency   = destinationCard.getCardCurrency();
+            if (!sourceCurrency.equalsIgnoreCase(destCurrency)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Currency mismatch: source card is in " + sourceCurrency +
+                                ", beneficiary card is in " + destCurrency + ".");
+            }
+
             effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(BigDecimal.valueOf(amount)));
             destinationCard.setBalance(destinationCard.getBalance().add(BigDecimal.valueOf(amount)));
 
@@ -642,10 +671,20 @@ public class CardController {
             }
 
             Optional<Card> providerCardOpt = cardService.findById(providerCardId);
+
             if (providerCardOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("Destination card for this provider not found.");
             }
             Card providerCard = providerCardOpt.get();
+
+            String sourceCurrency   = effectiveSourceCard.getCardCurrency();
+            String providerCurrency = providerCard.getCardCurrency();
+            if (!sourceCurrency.equalsIgnoreCase(providerCurrency)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Currency mismatch: your card is in " + sourceCurrency +
+                                " but provider accepts only " + providerCurrency + ".");
+            }
 
             effectiveSourceCard.setBalance(effectiveSourceCard.getBalance().subtract(BigDecimal.valueOf(amount)));
             providerCard.setBalance(providerCard.getBalance().add(BigDecimal.valueOf(amount)));
@@ -709,7 +748,163 @@ public class CardController {
         return ResponseEntity.ok(Map.of("totalSaved", savingsCard.getBalance()));
     }
 
+        @GetMapping("/user-cards/currency/{currency}")
+        public ResponseEntity<?> getUserCardsByCurrency(
+                @RequestHeader(value = "Authorization", required = false) String token,
+                @PathVariable String currency
+        ) {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body("Invalid or missing token.");
+            }
+            String jwtToken = token.substring(7).trim();
+            if (!jwtUtil.validateToken(jwtToken)) {
+                return ResponseEntity.status(401).body("Token is invalid or expired.");
+            }
+            String userContact = jwtUtil.extractContact(jwtToken);
+            Optional<User> userOpt = userService.findByContact(userContact);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("User not found.");
+            }
+            User user = userOpt.get();
+            List<Card> allCards = cardService.findCardsByUser(user);
+            List<Card> filtered = allCards.stream()
+                    .filter(c -> currency.equalsIgnoreCase(c.getCardCurrency()))
+                    .toList();
 
+            return ResponseEntity.ok(filtered);
+        }
 
+    @PostMapping("/exchange")
+    public ResponseEntity<?> exchangeCurrency(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestBody Map<String, String> payload
+    ) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body("Invalid or missing token.");
+        }
+        String jwt = token.substring(7).trim();
+        if (!jwtUtil.validateToken(jwt)) {
+            return ResponseEntity.status(401).body("Token invalid or expired.");
+        }
+        String contact = jwtUtil.extractContact(jwt);
+        User user = userService.findByContact(contact)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        String blockchainKey = user.getBlockchainPrivateKey();
+        if (blockchainKey == null) {
+            return ResponseEntity.status(500).body("Blockchain key not set for user.");
+        }
+
+        Long fromCardId;
+        Long toCardId = null;
+        BigDecimal amount, convertedAmount;
+        String toCurrency = payload.get("toCurrency");
+        try {
+            fromCardId       = Long.parseLong(payload.get("fromCardId"));
+            if (payload.get("toCardId") != null && !payload.get("toCardId").isBlank()) {
+                toCardId = Long.parseLong(payload.get("toCardId"));
+            }
+            amount           = new BigDecimal(payload.get("amount"));
+            convertedAmount  = new BigDecimal(payload.get("convertedAmount"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Invalid number format in payload.");
+        }
+        if (toCurrency == null || toCurrency.isBlank()) {
+            return ResponseEntity.badRequest().body("Missing toCurrency.");
+        }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0
+                || convertedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return ResponseEntity.badRequest().body("Amounts must be >0.");
+        }
+
+        Card source = cardService.findById(fromCardId)
+                .orElseThrow(() -> new RuntimeException("Source card not found"));
+        if (!source.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(403).body("You do not own the source card.");
+        }
+        if ("Virtual SSB".equalsIgnoreCase(source.getBankIssuer())) {
+            source = virtualCardService.getUnderlyingCard(Long.valueOf(source.getId()))
+                    .orElseThrow(() -> new RuntimeException("Underlying card missing"));
+        }
+        if (source.getBalance().compareTo(amount) < 0) {
+            return ResponseEntity.badRequest().body("Insufficient balance on source card.");
+        }
+
+        Card dest;
+        if (toCardId != null) {
+            dest = cardService.findById(toCardId)
+                    .orElseThrow(() -> new RuntimeException("Destination card not found"));
+            if (!dest.getUser().getId().equals(user.getId())) {
+                return ResponseEntity.status(403).body("You do not own the destination card.");
+            }
+        } else {
+            dest = cardService.findByUserAndCurrency(user, toCurrency)
+                    .orElseGet(() -> {
+                        Card c = new Card();
+                        c.setUser(user);
+                        c.setCardholderName(user.getNumeComplet());
+                        c.setCardNumber(generateRandomCardNumber());
+                        c.setCvv(generateRandomCvv());
+                        c.setExpiryDate(generateExpiryDate());
+                        c.setCardCurrency(toCurrency);
+                        c.setBankIssuer("SSB");
+                        c.setIban(generateIbanForCurrency(toCurrency));
+                        c.setPersonalizedName(toCurrency + " wallet");
+                        c.setBalance(BigDecimal.ZERO);
+                        c.setActive(true);
+                        cardService.saveCard(c);
+                        return c;
+                    });
+        }
+
+        boolean onChainOk = blockchainService.validateTransferOnBlockchain(
+                source.getIban(),
+                dest.getIban(),
+                amount.toBigInteger(),
+                blockchainKey
+        );
+        if (!onChainOk) {
+            return ResponseEntity
+                    .status(400)
+                    .body("Blockchain validation failed. Transaction aborted.");
+        }
+
+        source.setBalance(source.getBalance().subtract(amount));
+        dest.setBalance(dest.getBalance().add(convertedAmount));
+        cardService.saveCard(source);
+        cardService.saveCard(dest);
+        return ResponseEntity.ok(Map.of(
+                "message",          "Exchange completed",
+                "fromCardId",       source.getId(),
+                "toCardId",         dest.getId(),
+                "debitedAmount",    amount,
+                "creditedAmount",   convertedAmount,
+                "currency",         toCurrency
+        ));
+    }
+    private String generateIbanForCurrency(String currency) {
+        String countryCode = "RO";
+        String bankCode    = "SSB";
+        String currencyCode = currency;
+        StringBuilder bban = new StringBuilder();
+        for (int i = 0; i < 16; i++) {
+            bban.append((int) (Math.random() * 10));
+        }
+        return countryCode + bankCode + currencyCode + bban;
+    }
+
+    private String generateRandomCardNumber() {
+        StringBuilder sb = new StringBuilder(16);
+        for (int i = 0; i < 16; i++) {
+            sb.append((int)(Math.random() * 10));
+        }
+        return sb.toString();
+    }
+    private String generateRandomCvv() {
+        return String.valueOf((int)(Math.random() * 900) + 100);
+    }
+    private String generateExpiryDate() {
+        YearMonth ym = YearMonth.now().plusYears(4);
+        return String.format("%02d/%02d", ym.getMonthValue(), ym.getYear() % 100);
+    }
 }
 
