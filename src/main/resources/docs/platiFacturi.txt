@@ -36,6 +36,8 @@ Pay your household bills in just a few taps.
 - Check your internet connection and try again if you see a network error.
 - You can always tap **Back** to adjust any information before confirming.
 
+### 7. Where to see your transactions
+-in the "cards" screen, every card has below it's afferent transactions
 ---
 
 **Behind the scenes**

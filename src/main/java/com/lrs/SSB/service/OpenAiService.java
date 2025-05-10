@@ -7,7 +7,9 @@ import com.lrs.SSB.controller.ChatResponseDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.core.io.Resource;
-
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -86,6 +88,9 @@ public class OpenAiService {
     }
 
     public String askChatGPT(String userMessage) {
+        String today = LocalDate
+                .now(ZoneId.of("Europe/Bucharest"))
+                .format(DateTimeFormatter.ofPattern("MMMM d, yyyy"));
         String context = buildContext(userMessage);
 
         ChatRequestDTO.Message sys = new ChatRequestDTO.Message("system", """
@@ -96,7 +101,7 @@ public class OpenAiService {
             --------------- CONTEXT ---------------
             %s
             ----------------------------------------
-            """.formatted(context));
+            """.formatted(today, context));
 
         ChatRequestDTO.Message user = new ChatRequestDTO.Message("user", userMessage);
 
