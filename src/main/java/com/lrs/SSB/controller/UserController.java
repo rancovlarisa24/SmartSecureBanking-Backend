@@ -679,4 +679,25 @@ public class UserController {
         return String.valueOf(cvvNum);
     }
 
+    @GetMapping("/id-by-name")
+    public ResponseEntity<?> getUserIdByName(@RequestParam("numeComplet") String numeComplet) {
+        Optional<User> lenderOpt = userService.findByNumeComplet(numeComplet);
+        if (lenderOpt.isEmpty()) {
+            return ResponseEntity.status(404)
+                    .body(Map.of("message", "User not found."));
+        }
+        return ResponseEntity.ok(Map.of("userId", lenderOpt.get().getId()));
+    }
+
+    @GetMapping("/username/{id}")
+    public ResponseEntity<?> getUsernameById(@PathVariable Integer id) {
+        Optional<User> userOpt = userRepository.findById(Long.valueOf(id));
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404)
+                    .body(Map.of("message", "User not found."));
+        }
+
+        User user = userOpt.get();
+        return ResponseEntity.ok(Map.of("username", user.getNumeComplet()));
+    }
 }

@@ -42,6 +42,8 @@ Move money quickly between your own cards or send to someone else—right from y
 - Fields with problems show an error message underneath.
 - When it succeeds, you’ll see a “Transfer successful” alert and the form will clear.
 
+### 8. Where to see your transactions
+-in the "cards" screen, every card has below it's afferent transactions
 ---
 
 **APIs at work:**

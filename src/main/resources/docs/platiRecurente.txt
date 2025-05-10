@@ -60,6 +60,9 @@ Automate your regular bills or transfers so you never miss a payment.
 
 ---
 
+### Where to see your transactions
+-in the "cards" screen, every card has below it's afferent transactions
+
 ### Tips & reminders
 - Use clear names (e.g. “Gym membership” or “Electric bill”) so you recognize them.
 - Check your card’s balance occasionally—if it’s too low, the payment will pause automatically.

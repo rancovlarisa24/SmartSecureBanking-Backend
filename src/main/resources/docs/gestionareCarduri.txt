@@ -44,6 +44,7 @@ Easily view, add, rename, block, delete or get reports on your cards—right fro
 ### 8. View transaction history
 - Scroll down on the **Cards** screen below the action buttons.
 - Your recent transactions appear, showing date, amount, beneficiary and type.
+- This is the only way you can see your transactions.
 
 ---
 

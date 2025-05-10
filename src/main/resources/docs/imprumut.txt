@@ -1,0 +1,63 @@
+#LOAN SYSTEM FUNCTIONALITY
+
+1. REQUESTING A LOAN
+Access the "Loans" screen from menu to initiate a request
+Complete the following steps:
+a) Lender's name (automatically verified in the system)
+b) Desired amount (100–10,000 USD with adjustable slider)
+c) Offered interest rate (0–35% with numeric selector)
+d) Repayment term (1–12 months)
+e) Loan purpose
+f) Contact details
+g) IBAN for repayment
+h) Upload ID photo
+
+2. MANAGING REQUESTS
+View your requests in "Requested Loans" (icon in the Loans screen):
+PENDING – waiting for approval
+APPROVED – approved (you can make a payment)
+REJECTED – rejected
+PAYED – fully repaid
+
+Available options:
+Edit pending request - only possible if status is pending
+Cancel request - only possible if status is pending
+Archive after completion or after rejection
+
+3. APPROVING REQUESTS
+Receive loan requests in the "Messages" section which is available from every screen
+
+View full details:
+Amount + interest
+Repayment term
+Beneficiary's IBAN
+ID photo (if provided)
+Possible actions:
+Approve (redirects to transfer)
+Reject
+
+4. PAYMENTS AND REPAYMENT
+
+For APPROVED loans:
+The system automatically calculates the total owed (principal + interest)
+You can make partial or full payments
+Payment history is recorded (added in the transaction section of the card you payed with)
+
+5. SECURITY
+
+Identity verification through:
+Valid IBAN confirmation
+ID document upload (optional)
+System checks if the lender exists in the database
+
+6. LIMITS
+
+Maximum amount per transaction: 10,000 USD
+Maximum allowed interest: 35%
+Maximum repayment period: 12 months
+
+7. NOTIFICATIONS
+
+You will receive alerts when:
+You receive a new loan request
+Repayment deadline is approaching
